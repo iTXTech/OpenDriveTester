@@ -1,0 +1,37 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.gorylenko.gradle-git-properties' version '2.0.0'
+}
+
+repositories {
+    maven {
+        url = 'https://mirrors.huaweicloud.com/repository/maven/'
+    }
+}
+
+group = 'org.itxtech'
+version = '1.0-SNAPSHOT'
+description = 'OpenDriverTester'
+sourceCompatibility = '11'
+
+dependencies {
+    compile 'commons-cli:commons-cli:1.4'
+}
+
+gitProperties {
+    keys = ['git.branch', 'git.commit.id.abbrev', 'git.build.time']
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'org.itxtech.opendrivertester.Main'
+    }
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+application {
+    mainClassName = 'org.itxtech.opendrivertester.Main'
+}
