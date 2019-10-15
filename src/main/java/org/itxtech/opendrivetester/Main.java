@@ -4,6 +4,8 @@ import org.apache.commons.cli.*;
 import oshi.SystemInfo;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Properties;
 
 /*
@@ -73,17 +75,32 @@ public class Main {
                 for (var partition : disk.getPartitions()) {
                     if (!partition.getMountPoint().equals("")) {
                         print(partition.getMountPoint() + "\t" + disk.getModel() + "\t" + disk.getSerial() + "\t" +
-                                (disk.getSize() / 1024 / 1024 / 1024) + "GB");
+                                byteToReadable(Long.valueOf(disk.getSize()).doubleValue()));
                     }
                 }
             }
         }
         if (cmd.hasOption("w")) {
-            new Writer(cmd.getOptionValue("w"));
+            writeDrive(cmd.getOptionValue("w"));
         }
+    }
+
+    private static void writeDrive(String drive) {
+        var writer = new Writer(drive);
+
     }
 
     public static void print(String s) {
         System.out.println(s);
+    }
+
+    public static String byteToReadable(Double b) {
+        String[] unit = {"B", "KB", "MB", "GB"};
+        var i = 0;
+        while (b >= 1024 && (unit.length > (i + 1))) {
+            b /= 1024;
+            i++;
+        }
+        return new BigDecimal(b).setScale(2, RoundingMode.HALF_UP) + unit[i];
     }
 }

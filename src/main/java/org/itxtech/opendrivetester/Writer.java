@@ -1,5 +1,11 @@
 package org.itxtech.opendrivetester;
 
+import oshi.SystemInfo;
+import oshi.hardware.HWDiskStore;
+import oshi.hardware.HWPartition;
+
+import java.io.File;
+
 /*
  * iTXTech OpenDriveTester
  *
@@ -18,7 +24,44 @@ package org.itxtech.opendrivetester;
  * limitations under the License.
  */
 public class Writer {
-    public Writer(String drive) {
+    private String drive;
 
+    public Writer(String drive) {
+        new Writer(drive, true);
+    }
+
+    public Writer(String drive, boolean printInfo) {
+        this.drive = drive;
+        if (printInfo) {
+            HWDiskStore diskStore = null;
+            HWPartition part = null;
+            for (var disk : new SystemInfo().getHardware().getDiskStores()) {
+                for (var partition : disk.getPartitions()) {
+                    if (partition.getMountPoint().toLowerCase().startsWith(drive.toLowerCase())) {
+                        part = partition;
+                        diskStore = disk;
+                    }
+                }
+            }
+            if (part == null) {
+                Main.print("Drive not found: " + drive);
+            } else {
+                Main.print("Drive Name: \t" + diskStore.getModel());
+                Main.print("Serial: \t" + diskStore.getSerial());
+                Main.print("Total Space: \t" + Main.byteToReadable(Long.valueOf(part.getSize()).doubleValue()));
+                for (var store : new SystemInfo().getOperatingSystem().getFileSystem().getFileStores()) {
+                    if (store.getMount().toLowerCase().startsWith(drive.toLowerCase())) {
+                        Main.print("Free Space: \t" + Main.byteToReadable(Long.valueOf(store.getFreeSpace()).doubleValue()));
+                        Main.print("Description: \t" + store.getDescription());
+                        break;
+                    }
+                }
+                Main.print("");
+            }
+        }
+    }
+
+    public void checkOdtd() {
+        new Odtd(new File(drive + File.pathSeparatorChar + "1.odtd"));
     }
 }

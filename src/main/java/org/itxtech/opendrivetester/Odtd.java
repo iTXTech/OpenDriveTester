@@ -1,6 +1,7 @@
 package org.itxtech.opendrivetester;
 
 import java.io.File;
+import java.util.Random;
 
 /*
  * iTXTech OpenDriveTester
@@ -20,9 +21,19 @@ import java.io.File;
  * limitations under the License.
  */
 public class Odtd {
+    /*
+     * ODTD - OpenDriveTesterData
+     *
+     * 8 Bytes - ODTD Header
+     * 8 Bytes - Random Seed for 10 TIMES
+     * 8 Bytes - Data
+     */
+
     public static final int DEFAULT_SIZE = 1024 * 1024 * 1024;//1GB
 
     public Odtd(File file) {
+        if (file.exists()) {
 
+        }
     }
 }
