@@ -12,20 +12,21 @@ repositories {
 
 group = 'org.itxtech'
 version = '1.0-SNAPSHOT'
-description = 'OpenDriverTester'
+description = 'OpenDriveTester'
 sourceCompatibility = '11'
 
 dependencies {
     compile 'commons-cli:commons-cli:1.4'
+    compile 'com.github.oshi:oshi-core:4.0.0'
 }
 
 gitProperties {
-    keys = ['git.branch', 'git.commit.id.abbrev', 'git.build.time']
+    keys = ['git.branch', 'git.commit.id', 'git.build.time']
 }
 
 jar {
     manifest {
-        attributes 'Main-Class': 'org.itxtech.opendrivertester.Main'
+        attributes 'Main-Class': 'org.itxtech.opendrivetester.Main'
     }
     from {
         configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
@@ -33,5 +34,5 @@ jar {
 }
 
 application {
-    mainClassName = 'org.itxtech.opendrivertester.Main'
+    mainClassName = 'org.itxtech.opendrivetester.Main'
 }

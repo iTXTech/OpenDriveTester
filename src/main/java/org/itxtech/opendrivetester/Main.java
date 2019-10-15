@@ -1,6 +1,10 @@
-package org.itxtech.opendrivertester;
+package org.itxtech.opendrivetester;
 
 import org.apache.commons.cli.*;
+import oshi.SystemInfo;
+
+import java.io.IOException;
+import java.util.Properties;
 
 /*
  * iTXTech OpenDriveTester
@@ -19,8 +23,22 @@ import org.apache.commons.cli.*;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-class Main {
+public class Main {
+    public static final String VERSION = "1.0-SNAPSHOT";
+
     public static void main(String[] args) {
+        var properties = new Properties();
+        try {
+            properties.load(Main.class.getClassLoader().getResourceAsStream("git.properties"));
+        } catch (IOException ignored) {
+        }
+        print("iTXTech OpenDriveTester version " + VERSION);
+        print("Revision: " + properties.getProperty("git.commit.id", "Unknown"));
+        print("Built on " + properties.getProperty("git.build.time", "Unknown"));
+        print("Copyright (C) 2019 iTX Technologies");
+        print("https://github.com/iTXTech/OpenDriveTester");
+        print("");
+
         var options = new Options();
         var group = new OptionGroup();
         var write = new Option("w", "write", true, "Write to specified drive");
@@ -51,7 +69,17 @@ class Main {
 
     private static void processCmd(CommandLine cmd) {
         if (cmd.hasOption("l")) {
-
+            for (var disk : new SystemInfo().getHardware().getDiskStores()) {
+                for (var partition : disk.getPartitions()) {
+                    if (!partition.getMountPoint().equals("")) {
+                        print(partition.getMountPoint() + "\t" + disk.getModel() + "\t" + disk.getSerial() + "\t" +
+                                (disk.getSize() / 1024 / 1024 / 1024) + "GB");
+                    }
+                }
+            }
+        }
+        if (cmd.hasOption("w")) {
+            new Writer(cmd.getOptionValue("w"));
         }
     }
 
