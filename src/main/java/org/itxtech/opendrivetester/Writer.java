@@ -85,7 +85,7 @@ public class Writer {
         }
     }
 
-    public void write(WriteDaemon daemon, boolean fixed) {
+    public void write(WriteDaemon daemon, boolean fixed, boolean overwrite) {
         var i = 0;
         try {
             long freeSpace = getFreeSpace();
@@ -98,6 +98,9 @@ public class Writer {
             while ((freeSpace = getFreeSpace()) > RESERVED_SPACE) {
                 Odtd odtd;
                 var file = new File(drive + File.separator + (i++) + ".odtd");
+                while (!overwrite && file.exists()) {
+                    file = new File(drive + File.separator + (i++) + ".odtd");
+                }
                 if (freeSpace < Odtd.DEFAULT_SIZE) {
                     odtd = new Odtd(file, freeSpace - RESERVED_SPACE);
                 } else {

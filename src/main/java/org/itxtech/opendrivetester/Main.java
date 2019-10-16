@@ -60,7 +60,10 @@ public class Main {
         group.addOption(listDrive);
 
         var useFixedSeed = new Option("f", "fixed-seed", false, "Use fixed seed");
-        group.addOption(useFixedSeed);
+        options.addOption(useFixedSeed);
+
+        var overwrite = new Option("o", "overwrite", false, "Overwrite existing ODTD files");
+        options.addOption(overwrite);
 
         group.setRequired(true);
         options.addOptionGroup(group);
@@ -85,13 +88,13 @@ public class Main {
             }
         }
         if (cmd.hasOption("w")) {
-            writeDrive(cmd.getOptionValue("w"), cmd.hasOption("f"));
+            writeDrive(cmd.getOptionValue("w"), cmd.hasOption("f"), cmd.hasOption("o"));
         }
     }
 
-    private static void writeDrive(String drive, boolean fixed) {
+    private static void writeDrive(String drive, boolean fixed, boolean overwrite) {
         var writer = new Writer(drive);
-        writer.write(new WriteDaemon(), fixed);
+        writer.write(new WriteDaemon(), fixed, overwrite);
     }
 
     public static void print(String s) {
