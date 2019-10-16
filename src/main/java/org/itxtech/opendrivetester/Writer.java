@@ -1,5 +1,6 @@
 package org.itxtech.opendrivetester;
 
+import org.itxtech.opendrivetester.daemon.WriteDaemon;
 import oshi.SystemInfo;
 import oshi.hardware.HWDiskStore;
 import oshi.hardware.HWPartition;
@@ -28,6 +29,7 @@ public class Writer {
 
     private SystemInfo info = new SystemInfo();
     private String drive;
+    private long totalSpace;
 
     public Writer(String drive) {
         this(drive, true);
@@ -42,6 +44,7 @@ public class Writer {
                     part = partition;
                     diskStore = disk;
                     this.drive = part.getMountPoint();
+                    this.totalSpace = part.getSize();
                 }
             }
         }
@@ -82,14 +85,33 @@ public class Writer {
         }
     }
 
-    public void write() {
+    public void write(WriteDaemon daemon) {
         var i = 0;
         try {
-            while (getFreeSpace() > RESERVED_SPACE) {
-                var odtd = new Odtd(new File(drive + File.separator + (i++) + ".odtd"));
+            long freeSpace = getFreeSpace();
+            if (daemon != null) {
+                daemon.setTotalSpace(totalSpace);
+                daemon.setFreeSpace(freeSpace);
+                var thread = new Thread(daemon);
+                thread.start();
+            }
+            while ((freeSpace = getFreeSpace()) > RESERVED_SPACE) {
+                Odtd odtd;
+                var file = new File(drive + File.separator + (i++) + ".odtd");
+                if (freeSpace < Odtd.DEFAULT_SIZE) {
+                    odtd = new Odtd(file, freeSpace - RESERVED_SPACE);
+                } else {
+                    odtd = new Odtd(file);
+                }
+                if (daemon != null) {
+                    daemon.setCurrentOdtd(odtd);
+                }
                 odtd.writeHeader();
                 odtd.write();
                 odtd.completeWrite();
+            }
+            if (daemon != null) {
+                daemon.shutdown();
             }
         } catch (Exception e) {
             e.printStackTrace();
