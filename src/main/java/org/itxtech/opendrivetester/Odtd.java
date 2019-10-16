@@ -26,13 +26,13 @@ public class Odtd {
      *
      * 8 Bytes - ODTD Header
      * 4 Bytes - Creation time
-     * 4 Bytes - Complete time
+     * 4 Bytes - Completion time
      * 8 Bytes - Random Seed for 4 times
      * 8 Bytes - Data
      */
 
     public static final long DEFAULT_SIZE = (long) 2 * 1024 * 1024 * 1024;//2GB
-    public static final int DEFAULT_BUFFER_SIZE = 128 * 1024;//128KB
+    public static final int DEFAULT_BUFFER_SIZE = 256 * 1024;//256KB
     public static final String HEADER = "ODTD1.0";
     public static final int SEED_TIMES = 4;
 
@@ -40,16 +40,16 @@ public class Odtd {
     private int bufferSize;
     private long size;
     private long currentSize = 0;
-    private int creationTime;
-    private int completionTime = 0;
+    private long creationTime;
+    private long completionTime = 0;
     private long seed = 0;
     private FileOutputStream os;
 
-    public int getCreationTime() {
+    public long getCreationTime() {
         return creationTime;
     }
 
-    public int getCompletionTime() {
+    public long getCompletionTime() {
         return completionTime;
     }
 
@@ -107,12 +107,12 @@ public class Odtd {
     }
 
     public void writeHeader() throws Exception {
-        creationTime = (int) System.currentTimeMillis() / 1000;
+        creationTime = System.currentTimeMillis();
         seed = System.currentTimeMillis();
         os = new FileOutputStream(file);
         os.write(HEADER.getBytes());
-        os.write(writeInt(creationTime));
-        os.write(writeInt(completionTime));
+        os.write(writeLong(creationTime));
+        os.write(writeLong(completionTime));
         for (var i = 0; i < SEED_TIMES; i++) {
             os.write(writeLong(seed));
         }
@@ -131,20 +131,11 @@ public class Odtd {
     public void completeWrite() throws Exception {
         os.flush();
         os.close();
-        completionTime = (int) System.currentTimeMillis() / 1000;
+        completionTime = System.currentTimeMillis();
         var raf = new RandomAccessFile(file, "rw");
         raf.seek(HEADER.getBytes().length + 4);
-        raf.writeInt(completionTime);
+        raf.writeLong(completionTime);
         raf.close();
-    }
-
-    private static byte[] writeInt(int v) {
-        byte[] buf = new byte[4];
-        buf[0] = (byte) ((v >>> 24) & 0xFF);
-        buf[1] = (byte) ((v >>> 16) & 0xFF);
-        buf[2] = (byte) ((v >>> 8) & 0xFF);
-        buf[3] = (byte) ((v >>> 0) & 0xFF);
-        return buf;
     }
 
     private static byte[] writeLong(long v) {

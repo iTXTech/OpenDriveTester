@@ -1,5 +1,6 @@
 package org.itxtech.opendrivetester.daemon;
 
+import org.itxtech.opendrivetester.Main;
 import org.itxtech.opendrivetester.Odtd;
 
 import java.math.BigDecimal;
@@ -28,6 +29,7 @@ public class WriteDaemon implements Runnable {
     private long startTime = System.currentTimeMillis();
     private long totalSpace;
     private long freeSpace;
+    private long written = 0;
     private long lastTime;
     private long lastSize;
 
@@ -47,6 +49,9 @@ public class WriteDaemon implements Runnable {
     }
 
     public void setCurrentOdtd(Odtd currentOdtd) {
+        if (this.currentOdtd != null) {
+            this.written += this.currentOdtd.getCurrentSize();
+        }
         this.currentOdtd = currentOdtd;
         this.lastTime = System.currentTimeMillis();
         this.lastSize = currentOdtd.getCurrentSize();
@@ -54,12 +59,15 @@ public class WriteDaemon implements Runnable {
 
     @Override
     public void run() {
+        Main.print("Current \tAverage \tWritten \tRemaining");
         while (!shutdown) {
             if (currentOdtd != null) {
                 var currentSize = currentOdtd.getCurrentSize();
                 var currentTime = System.currentTimeMillis();
-                var speed = (currentSize - lastSize) / (currentTime - lastTime);
-                System.out.print("\r" + byteToMb(speed));
+                var total = written + currentSize;
+                System.out.print("\r" + byteToMb((currentSize - lastSize) / (currentTime - lastTime)) + "/s\t" +
+                        byteToMb(total / (currentTime - startTime)) + "/s\t" +
+                        byteToMb(total / 1024) + "\t" + byteToMb((freeSpace - total) / 1024));
             }
             try {
                 Thread.sleep(200);
@@ -67,6 +75,7 @@ public class WriteDaemon implements Runnable {
                 e.printStackTrace();
             }
         }
+        Main.print("Write completed.");
     }
 
     private static String byteToMb(long b) {
