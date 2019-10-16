@@ -59,6 +59,9 @@ public class Main {
         var listDrive = new Option("l", "list-drive", false, "List all drives");
         group.addOption(listDrive);
 
+        var useFixedSeed = new Option("f", "fixed-seed", false, "Use fixed seed");
+        group.addOption(useFixedSeed);
+
         group.setRequired(true);
         options.addOptionGroup(group);
 
@@ -82,13 +85,13 @@ public class Main {
             }
         }
         if (cmd.hasOption("w")) {
-            writeDrive(cmd.getOptionValue("w"));
+            writeDrive(cmd.getOptionValue("w"), cmd.hasOption("f"));
         }
     }
 
-    private static void writeDrive(String drive) {
+    private static void writeDrive(String drive, boolean fixed) {
         var writer = new Writer(drive);
-        writer.write(new WriteDaemon());
+        writer.write(new WriteDaemon(), fixed);
     }
 
     public static void print(String s) {

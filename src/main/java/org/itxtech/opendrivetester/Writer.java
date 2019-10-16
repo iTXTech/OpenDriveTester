@@ -85,7 +85,7 @@ public class Writer {
         }
     }
 
-    public void write(WriteDaemon daemon) {
+    public void write(WriteDaemon daemon, boolean fixed) {
         var i = 0;
         try {
             long freeSpace = getFreeSpace();
@@ -106,9 +106,13 @@ public class Writer {
                 if (daemon != null) {
                     daemon.setCurrentOdtd(odtd);
                 }
-                odtd.writeHeader();
-                odtd.write();
-                odtd.completeWrite();
+                if (fixed) {
+                    odtd.write(true);
+                } else {
+                    odtd.writeHeader();
+                    odtd.write(false);
+                    odtd.completeWrite();
+                }
             }
             if (daemon != null) {
                 daemon.shutdown();

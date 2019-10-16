@@ -29,7 +29,16 @@ public class Odtd {
      * 4 Bytes - Completion time
      * 8 Bytes - Random Seed for 4 times
      * 8 Bytes - Data
+     *
+     * -----------------
+     *
+     * Fixed Seed, designed for unstable drives
+     * No header, no extra data
+     *
+     * 8 Bytes - Data
      */
+
+    public static final long FIXED_SEED = 2019070920000531L;
 
     public static final long DEFAULT_SIZE = (long) 2 * 1024 * 1024 * 1024;//2GB
     public static final int DEFAULT_BUFFER_SIZE = 256 * 1024;//256KB
@@ -118,8 +127,8 @@ public class Odtd {
         }
     }
 
-    public void write() throws Exception {
-        var random = new Random(seed);
+    public void write(boolean fixed) throws Exception {
+        var random = fixed ? new Random(FIXED_SEED) : new Random(seed);
         for (var i = 0; i < size / bufferSize; i++) {
             byte[] buf = new byte[bufferSize];
             random.nextBytes(buf);
