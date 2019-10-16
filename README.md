@@ -4,8 +4,12 @@ Open Source Drive Tester for UFDs and SSDs.
 
 ## Usage
 
-```powershell
-X:\>java -jar opendrivertester.jar
+```
+usage: opendrivetester
+ -a,--write-and-verify <drive>   Write and verify the specified drive
+ -l,--list-drive                 List all drives
+ -v,--verify <drive>             Verify the specified drive
+ -w,--write <drive>              Write to specified drive
 ```
 
 ## License

@@ -87,7 +87,7 @@ public class Main {
 
     private static void writeDrive(String drive) {
         var writer = new Writer(drive);
-
+        writer.write();
     }
 
     public static void print(String s) {
@@ -102,5 +102,18 @@ public class Main {
             i++;
         }
         return new BigDecimal(b).setScale(2, RoundingMode.HALF_UP) + unit[i];
+    }
+
+    public static byte[] writeLong(long v) {
+        byte[] buf = new byte[8];
+        buf[0] = (byte) (v >>> 56);
+        buf[1] = (byte) (v >>> 48);
+        buf[2] = (byte) (v >>> 40);
+        buf[3] = (byte) (v >>> 32);
+        buf[4] = (byte) (v >>> 24);
+        buf[5] = (byte) (v >>> 16);
+        buf[6] = (byte) (v >>> 8);
+        buf[7] = (byte) (v >>> 0);
+        return buf;
     }
 }

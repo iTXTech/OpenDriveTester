@@ -24,32 +24,35 @@ import java.io.File;
  * limitations under the License.
  */
 public class Writer {
+    public static final int RESERVED_SPACE = 1024;
+
+    private SystemInfo info = new SystemInfo();
     private String drive;
 
     public Writer(String drive) {
-        new Writer(drive, true);
+        this(drive, true);
     }
 
     public Writer(String drive, boolean printInfo) {
-        this.drive = drive;
-        if (printInfo) {
-            HWDiskStore diskStore = null;
-            HWPartition part = null;
-            for (var disk : new SystemInfo().getHardware().getDiskStores()) {
-                for (var partition : disk.getPartitions()) {
-                    if (partition.getMountPoint().toLowerCase().startsWith(drive.toLowerCase())) {
-                        part = partition;
-                        diskStore = disk;
-                    }
+        HWDiskStore diskStore = null;
+        HWPartition part = null;
+        for (var disk : info.getHardware().getDiskStores()) {
+            for (var partition : disk.getPartitions()) {
+                if (partition.getMountPoint().toLowerCase().startsWith(drive.toLowerCase())) {
+                    part = partition;
+                    diskStore = disk;
+                    this.drive = part.getMountPoint();
                 }
             }
+        }
+        if (printInfo) {
             if (part == null) {
                 Main.print("Drive not found: " + drive);
             } else {
                 Main.print("Drive Name: \t" + diskStore.getModel());
                 Main.print("Serial: \t" + diskStore.getSerial());
                 Main.print("Total Space: \t" + Main.byteToReadable(Long.valueOf(part.getSize()).doubleValue()));
-                for (var store : new SystemInfo().getOperatingSystem().getFileSystem().getFileStores()) {
+                for (var store : info.getOperatingSystem().getFileSystem().getFileStores()) {
                     if (store.getMount().toLowerCase().startsWith(drive.toLowerCase())) {
                         Main.print("Free Space: \t" + Main.byteToReadable(Long.valueOf(store.getFreeSpace()).doubleValue()));
                         Main.print("Description: \t" + store.getDescription());
@@ -61,7 +64,35 @@ public class Writer {
         }
     }
 
-    public void checkOdtd() {
-        new Odtd(new File(drive + File.pathSeparatorChar + "1.odtd"));
+    private long getFreeSpace() {
+        for (var store : info.getOperatingSystem().getFileSystem().getFileStores()) {
+            if (store.getMount().toLowerCase().startsWith(drive.toLowerCase())) {
+                return store.getFreeSpace();
+            }
+        }
+        return 0;
+    }
+
+    public void check() {
+        try {
+            var data = new Odtd(new File(drive + File.separator + "1.odtd"));
+            data.check();
+        } catch (Exception e) {
+            Main.print(e.getMessage());
+        }
+    }
+
+    public void write() {
+        var i = 0;
+        try {
+            while (getFreeSpace() > RESERVED_SPACE) {
+                var odtd = new Odtd(new File(drive + File.separator + (i++) + ".odtd"));
+                odtd.writeHeader();
+                odtd.write();
+                odtd.completeWrite();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
