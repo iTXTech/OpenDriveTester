@@ -65,6 +65,7 @@ public class Main {
         options.addOption(overwrite);
 
         var loop = new Option("r", "loop", true, "Write and verify automatically for specified loops");
+        loop.setArgName("loops");
         options.addOption(loop);
 
         group.setRequired(true);

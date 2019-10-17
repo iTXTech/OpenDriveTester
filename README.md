@@ -2,14 +2,28 @@
 
 Open Source Drive Tester for UFDs and SSDs.
 
+## Introduction
+
+* Use Java Random to generate data
+* Unique `ODTD` file format which support both fixed seed and random seed
+* Fixed seed is always `2019070920000531L`
+* Disable system write and read cache when testing
+
 ## Usage
 
 ```
+X:\> java -jar .\OpenDriveTester-1.0-SNAPSHOT.jar
 usage: opendrivetester
  -a,--write-and-verify <drive>   Write and verify the specified drive
+ -f,--fixed-seed                 Use fixed seed
  -l,--list-drive                 List all drives
+ -o,--overwrite                  Overwrite existing ODTD files
+ -r,--loop <loops>               Write and verify automatically for
+                                 specified loops
  -v,--verify <drive>             Verify the specified drive
- -w,--write <drive>              Write to specified drive
+ -w,--write <drive>              Write to the specified drive
+
+X:\> java -jar .\OpenDriveTester-1.0-SNAPSHOT.jar -a d
 ```
 
 ## License
