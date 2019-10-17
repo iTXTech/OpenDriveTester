@@ -37,7 +37,7 @@ public class Verifier extends DriveAccessor {
                 for (var file : list) {
                     total += file.length();
                 }
-                daemon.setFreeSpace(total);
+                daemon.setTotalSpace(total);
                 var thread = new Thread(daemon);
                 thread.start();
             }

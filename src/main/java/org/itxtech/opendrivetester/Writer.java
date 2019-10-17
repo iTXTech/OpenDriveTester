@@ -34,7 +34,7 @@ public class Writer extends DriveAccessor {
         var i = 0;
         long freeSpace = getFreeSpace();
         if (daemon != null) {
-            daemon.setFreeSpace(freeSpace);
+            daemon.setTotalSpace(freeSpace);
             var thread = new Thread(daemon);
             thread.start();
         }

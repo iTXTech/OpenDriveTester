@@ -1,5 +1,6 @@
 package org.itxtech.opendrivetester;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -23,11 +24,24 @@ import java.math.RoundingMode;
 public class Daemon implements Runnable {
     public static final int TYPE_WRITE = 0;
     public static final int TYPE_VERIFY = 1;
+    private static final Handler handler = new Handler();
+
+    private static class Handler extends Odtd.VerificationHandler {
+        long errorBytes = 0;
+
+        @Override
+        public void error(long pos, byte correctValue, byte invalidValue, File file) {
+            Main.print("");
+            Main.print("Wrong value at " + pos + ", got " + correctValue + " should be " + correctValue +
+                    " in " + file.getAbsolutePath());
+            errorBytes++;
+        }
+    }
 
     private Odtd currentOdtd;
     private boolean shutdown = false;
     private long startTime = System.currentTimeMillis();
-    private long freeSpace;
+    private long totalSpace;
     private long passed = 0;
     private long lastTime;
     private long lastSize;
@@ -38,8 +52,8 @@ public class Daemon implements Runnable {
         this.type = type;
     }
 
-    public void setFreeSpace(long freeSpace) {
-        this.freeSpace = freeSpace;
+    public void setTotalSpace(long totalSpace) {
+        this.totalSpace = totalSpace;
     }
 
     public void shutdown() {
@@ -51,6 +65,7 @@ public class Daemon implements Runnable {
             this.passed += this.currentOdtd.getCurrentSize();
         }
         this.currentOdtd = currentOdtd;
+        this.currentOdtd.setVerificationHandler(handler);
         this.lastTime = System.currentTimeMillis();
         this.lastSize = currentOdtd.getCurrentSize();
     }
@@ -70,7 +85,7 @@ public class Daemon implements Runnable {
                 var currentSize = currentOdtd.getCurrentSize();
                 var currentTime = System.currentTimeMillis();
                 var total = passed + currentSize;
-                var remaining = (freeSpace - total) / 1024;
+                var remaining = (totalSpace - total) / 1024;
                 var average = total / (currentTime - startTime);
                 average = (average > 0) ? average : 1;
                 var timeDiff = currentTime - lastTime;
@@ -95,6 +110,9 @@ public class Daemon implements Runnable {
                 break;
             case TYPE_VERIFY:
                 Main.print("Verification completed.");
+                Main.print("Error Bytes: " + handler.errorBytes + "/" + totalSpace);
+                Main.print("Yield: " + new BigDecimal(Long.valueOf(totalSpace - handler.errorBytes).doubleValue() /
+                        Long.valueOf(totalSpace).doubleValue() * 100).setScale(2, RoundingMode.DOWN) + "%");
                 break;
         }
     }

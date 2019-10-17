@@ -54,6 +54,7 @@ public class Odtd {
     private long seed = 0;
     private FileOutputStream os;
     private DataInputStream is;
+    private VerificationHandler handler;
 
     public long getCreationTime() {
         return creationTime;
@@ -98,6 +99,10 @@ public class Odtd {
         }
     }
 
+    public void setVerificationHandler(VerificationHandler handler) {
+        this.handler = handler;
+    }
+
     public void check() throws Exception {
         is = new DataInputStream(new FileInputStream(file));
         var h = new String(is.readNBytes(HEADER.getBytes().length));
@@ -128,12 +133,13 @@ public class Odtd {
             random.nextBytes(randomBuf);
             for (var i = 0; i < size; i++) {
                 if (buffer[i] != randomBuf[i]) {
-                    Main.print("");
-                    Main.print("Wrong value at " + currentSize + ", got " + buffer[i] + " should be " + randomBuf[i] +
-                            " in " + file.getAbsolutePath());
+                    if (handler != null) {
+                        handler.error(currentSize, randomBuf[i], buffer[i], file);
+                    }
                 }
                 currentSize++;
             }
+            Thread.sleep(1);
         }
         return true;
     }
@@ -160,6 +166,7 @@ public class Odtd {
             random.nextBytes(buf);
             os.write(buf);
             currentSize += bufferSize;
+            Thread.sleep(1);
         }
     }
 
@@ -184,5 +191,9 @@ public class Odtd {
         buf[6] = (byte) (v >>> 8);
         buf[7] = (byte) (v >>> 0);
         return buf;
+    }
+
+    public static abstract class VerificationHandler {
+        public abstract void error(long pos, byte correctValue, byte invalidValue, File file);
     }
 }
