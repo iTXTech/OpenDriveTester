@@ -53,6 +53,7 @@ public class Odtd {
     private long completionTime = 0;
     private long seed = 0;
     private FileOutputStream os;
+    private DataInputStream is;
 
     public long getCreationTime() {
         return creationTime;
@@ -64,6 +65,10 @@ public class Odtd {
 
     public long getCurrentSize() {
         return currentSize;
+    }
+
+    public long getSeed() {
+        return seed;
     }
 
     public File getFile() {
@@ -93,14 +98,14 @@ public class Odtd {
         }
     }
 
-    public boolean check() throws Exception {
-        var is = new DataInputStream(new FileInputStream(file));
+    public void check() throws Exception {
+        is = new DataInputStream(new FileInputStream(file));
         var h = new String(is.readNBytes(HEADER.getBytes().length));
         if (!HEADER.equals(h)) {
             throw new IOException("Invalid header " + h + " in " + file.getAbsolutePath());
         }
-        creationTime = is.readInt();
-        completionTime = is.readInt();
+        creationTime = is.readLong();
+        completionTime = is.readLong();
         for (var i = 0; i < SEED_TIMES; i++) {
             if (seed == 0) {
                 seed = is.readLong();
@@ -108,16 +113,34 @@ public class Odtd {
                 throw new IOException("Invalid ODTD seed in " + file.getAbsolutePath());
             }
         }
-        return true;
     }
 
-    public boolean verify() {
+    public boolean verify(boolean fixed) throws Exception {
+        if (is == null) {
+            is = new DataInputStream(new FileInputStream(file));
+        }
+        var random = fixed ? new Random(FIXED_SEED) : new Random(seed);
+        while (is.available() > 0) {
+            int size = Math.min(is.available(), bufferSize);
+            var buffer = new byte[size];
+            size = is.read(buffer);
+            var randomBuf = new byte[size];
+            random.nextBytes(randomBuf);
+            for (var i = 0; i < size; i++) {
+                if (buffer[i] != randomBuf[i]) {
+                    Main.print("");
+                    Main.print("Wrong value at " + currentSize + ", got " + buffer[i] + " should be " + randomBuf[i] +
+                            " in " + file.getAbsolutePath());
+                }
+                currentSize++;
+            }
+        }
         return true;
     }
 
     public void writeHeader() throws Exception {
         creationTime = System.currentTimeMillis();
-        seed = System.currentTimeMillis();
+        seed = System.nanoTime();
         os = new FileOutputStream(file);
         os.write(HEADER.getBytes());
         os.write(writeLong(creationTime));
@@ -128,6 +151,9 @@ public class Odtd {
     }
 
     public void write(boolean fixed) throws Exception {
+        if (os == null) {
+            os = new FileOutputStream(file);
+        }
         var random = fixed ? new Random(FIXED_SEED) : new Random(seed);
         for (var i = 0; i < size / bufferSize; i++) {
             byte[] buf = new byte[bufferSize];
@@ -142,7 +168,7 @@ public class Odtd {
         os.close();
         completionTime = System.currentTimeMillis();
         var raf = new RandomAccessFile(file, "rw");
-        raf.seek(HEADER.getBytes().length + 4);
+        raf.seek(HEADER.getBytes().length + 8);
         raf.writeLong(completionTime);
         raf.close();
     }

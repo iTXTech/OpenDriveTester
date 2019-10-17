@@ -1,10 +1,5 @@
 package org.itxtech.opendrivetester;
 
-import org.itxtech.opendrivetester.daemon.WriteDaemon;
-import oshi.SystemInfo;
-import oshi.hardware.HWDiskStore;
-import oshi.hardware.HWPartition;
-
 import java.io.File;
 
 /*
@@ -24,75 +19,27 @@ import java.io.File;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class Writer {
+public class Writer extends DriveAccessor {
     public static final int RESERVED_SPACE = 512 * 1024;//512KB
 
-    private SystemInfo info = new SystemInfo();
-    private String drive;
-
     public Writer(String drive) {
-        this(drive, true);
+        super(drive);
     }
 
     public Writer(String drive, boolean printInfo) {
-        HWDiskStore diskStore = null;
-        HWPartition part = null;
-        for (var disk : info.getHardware().getDiskStores()) {
-            for (var partition : disk.getPartitions()) {
-                if (partition.getMountPoint().toLowerCase().startsWith(drive.toLowerCase())) {
-                    part = partition;
-                    diskStore = disk;
-                    this.drive = part.getMountPoint();
-                }
-            }
-        }
-        if (printInfo) {
-            if (part == null) {
-                Main.print("Drive not found: " + drive);
-            } else {
-                Main.print("Drive Name: \t" + diskStore.getModel());
-                Main.print("Serial: \t" + diskStore.getSerial());
-                Main.print("Total Space: \t" + Main.byteToReadable(Long.valueOf(part.getSize()).doubleValue()));
-                for (var store : info.getOperatingSystem().getFileSystem().getFileStores()) {
-                    if (store.getMount().toLowerCase().startsWith(drive.toLowerCase())) {
-                        Main.print("Free Space: \t" + Main.byteToReadable(Long.valueOf(store.getFreeSpace()).doubleValue()));
-                        Main.print("Description: \t" + store.getDescription());
-                        break;
-                    }
-                }
-                Main.print("");
-            }
-        }
+        super(drive, printInfo);
     }
 
-    private long getFreeSpace() {
-        for (var store : info.getOperatingSystem().getFileSystem().getFileStores()) {
-            if (store.getMount().toLowerCase().startsWith(drive.toLowerCase())) {
-                return store.getFreeSpace();
-            }
-        }
-        return 0;
-    }
-
-    public void check() {
-        try {
-            var data = new Odtd(new File(drive + File.separator + "1.odtd"));
-            data.check();
-        } catch (Exception e) {
-            Main.print(e.getMessage());
-        }
-    }
-
-    public void write(WriteDaemon daemon, boolean fixed, boolean overwrite) {
+    public void write(Daemon daemon, boolean fixed, boolean overwrite) {
         var i = 0;
+        long freeSpace = getFreeSpace();
+        if (daemon != null) {
+            daemon.setFreeSpace(freeSpace);
+            var thread = new Thread(daemon);
+            thread.start();
+        }
+        var end = false;
         try {
-            long freeSpace = getFreeSpace();
-            if (daemon != null) {
-                daemon.setFreeSpace(freeSpace);
-                var thread = new Thread(daemon);
-                thread.start();
-            }
-            var end = false;
             while ((freeSpace = getFreeSpace()) > RESERVED_SPACE && !end && (freeSpace - RESERVED_SPACE) > RESERVED_SPACE) {
                 Odtd odtd;
                 var file = new File(drive + File.separator + (i++) + ".odtd");
@@ -116,11 +63,11 @@ public class Writer {
                     odtd.completeWrite();
                 }
             }
-            if (daemon != null) {
-                daemon.shutdown();
-            }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        if (daemon != null) {
+            daemon.shutdown();
         }
     }
 }

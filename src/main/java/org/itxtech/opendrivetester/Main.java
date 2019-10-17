@@ -1,7 +1,6 @@
 package org.itxtech.opendrivetester;
 
 import org.apache.commons.cli.*;
-import org.itxtech.opendrivetester.daemon.WriteDaemon;
 import oshi.SystemInfo;
 
 import java.io.IOException;
@@ -90,11 +89,19 @@ public class Main {
         if (cmd.hasOption("w")) {
             writeDrive(cmd.getOptionValue("w"), cmd.hasOption("f"), cmd.hasOption("o"));
         }
+        if (cmd.hasOption("v")) {
+            verifyDrive(cmd.getOptionValue("v"), cmd.hasOption("f"));
+        }
     }
 
     private static void writeDrive(String drive, boolean fixed, boolean overwrite) {
         var writer = new Writer(drive);
-        writer.write(new WriteDaemon(), fixed, overwrite);
+        writer.write(new Daemon(Daemon.TYPE_WRITE), fixed, overwrite);
+    }
+
+    private static void verifyDrive(String drive, boolean fixed) {
+        var verifier = new Verifier(drive);
+        verifier.verify(new Daemon(Daemon.TYPE_VERIFY), fixed);
     }
 
     public static void print(String s) {

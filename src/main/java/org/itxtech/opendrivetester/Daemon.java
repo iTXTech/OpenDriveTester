@@ -1,7 +1,4 @@
-package org.itxtech.opendrivetester.daemon;
-
-import org.itxtech.opendrivetester.Main;
-import org.itxtech.opendrivetester.Odtd;
+package org.itxtech.opendrivetester;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -23,14 +20,23 @@ import java.math.RoundingMode;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class WriteDaemon implements Runnable {
+public class Daemon implements Runnable {
+    public static final int TYPE_WRITE = 0;
+    public static final int TYPE_VERIFY = 1;
+
     private Odtd currentOdtd;
     private boolean shutdown = false;
     private long startTime = System.currentTimeMillis();
     private long freeSpace;
-    private long written = 0;
+    private long passed = 0;
     private long lastTime;
     private long lastSize;
+
+    private int type;
+
+    public Daemon(int type) {
+        this.type = type;
+    }
 
     public void setFreeSpace(long freeSpace) {
         this.freeSpace = freeSpace;
@@ -42,7 +48,7 @@ public class WriteDaemon implements Runnable {
 
     public void setCurrentOdtd(Odtd currentOdtd) {
         if (this.currentOdtd != null) {
-            this.written += this.currentOdtd.getCurrentSize();
+            this.passed += this.currentOdtd.getCurrentSize();
         }
         this.currentOdtd = currentOdtd;
         this.lastTime = System.currentTimeMillis();
@@ -51,15 +57,27 @@ public class WriteDaemon implements Runnable {
 
     @Override
     public void run() {
-        Main.print("Current \tAverage \tWritten \tRemaining \tETA");
+        switch (type) {
+            case TYPE_WRITE:
+                Main.print("Current \tAverage \tWritten \tRemaining \tETA");
+                break;
+            case TYPE_VERIFY:
+                Main.print("Current \tAverage \tPassed  \tRemaining \tETA");
+                break;
+        }
         while (!shutdown) {
             if (currentOdtd != null) {
                 var currentSize = currentOdtd.getCurrentSize();
                 var currentTime = System.currentTimeMillis();
-                var total = written + currentSize;
+                var total = passed + currentSize;
                 var remaining = (freeSpace - total) / 1024;
                 var average = total / (currentTime - startTime);
-                System.out.print("\r" + byteToMb((currentSize - lastSize) / (currentTime - lastTime)) + "/s\t" +
+                average = (average > 0) ? average : 1;
+                var timeDiff = currentTime - lastTime;
+                if (timeDiff == 0) {
+                    timeDiff = Integer.MAX_VALUE;
+                }
+                System.out.print("\r" + byteToMb((currentSize - lastSize) / timeDiff) + "/s\t" +
                         byteToMb(average) + "/s\t" +
                         byteToMb(total / 1024) + "\t" + byteToMb(remaining) + "\t" +
                         Main.secToTime(remaining / average));
@@ -71,7 +89,14 @@ public class WriteDaemon implements Runnable {
             }
         }
         Main.print("");
-        Main.print("Write completed.");
+        switch (type) {
+            case TYPE_WRITE:
+                Main.print("Write completed.");
+                break;
+            case TYPE_VERIFY:
+                Main.print("Verification completed.");
+                break;
+        }
     }
 
     private static String byteToMb(long b) {

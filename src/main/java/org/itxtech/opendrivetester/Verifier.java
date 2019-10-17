@@ -1,5 +1,7 @@
 package org.itxtech.opendrivetester;
 
+import java.io.File;
+
 /*
  * iTXTech OpenDriveTester
  *
@@ -17,5 +19,45 @@ package org.itxtech.opendrivetester;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class Verifier {
+public class Verifier extends DriveAccessor {
+    public Verifier(String drive) {
+        super(drive);
+    }
+
+    public Verifier(String drive, boolean printInfo) {
+        super(drive, printInfo);
+    }
+
+    public void verify(Daemon daemon, boolean fixed) {
+        var dir = new File(drive + File.separator);
+        var list = dir.listFiles((d, name) -> name.endsWith(".odtd"));
+        if (list != null) {
+            if (daemon != null) {
+                long total = 0;
+                for (var file : list) {
+                    total += file.length();
+                }
+                daemon.setFreeSpace(total);
+                var thread = new Thread(daemon);
+                thread.start();
+            }
+            try {
+                for (var file : list) {
+                    var odtd = new Odtd(file);
+                    if (daemon != null) {
+                        daemon.setCurrentOdtd(odtd);
+                    }
+                    if (!fixed) {
+                        odtd.check();
+                    }
+                    odtd.verify(fixed);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (daemon != null) {
+                daemon.shutdown();
+            }
+        }
+    }
 }
