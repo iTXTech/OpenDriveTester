@@ -25,11 +25,10 @@ import java.io.File;
  * limitations under the License.
  */
 public class Writer {
-    public static final int RESERVED_SPACE = 1024;
+    public static final int RESERVED_SPACE = 512 * 1024;//512KB
 
     private SystemInfo info = new SystemInfo();
     private String drive;
-    private long totalSpace;
 
     public Writer(String drive) {
         this(drive, true);
@@ -44,7 +43,6 @@ public class Writer {
                     part = partition;
                     diskStore = disk;
                     this.drive = part.getMountPoint();
-                    this.totalSpace = part.getSize();
                 }
             }
         }
@@ -90,18 +88,19 @@ public class Writer {
         try {
             long freeSpace = getFreeSpace();
             if (daemon != null) {
-                daemon.setTotalSpace(totalSpace);
                 daemon.setFreeSpace(freeSpace);
                 var thread = new Thread(daemon);
                 thread.start();
             }
-            while ((freeSpace = getFreeSpace()) > RESERVED_SPACE) {
+            var end = false;
+            while ((freeSpace = getFreeSpace()) > RESERVED_SPACE && !end && (freeSpace - RESERVED_SPACE) > RESERVED_SPACE) {
                 Odtd odtd;
                 var file = new File(drive + File.separator + (i++) + ".odtd");
                 while (!overwrite && file.exists()) {
                     file = new File(drive + File.separator + (i++) + ".odtd");
                 }
                 if (freeSpace < Odtd.DEFAULT_SIZE) {
+                    end = true;
                     odtd = new Odtd(file, freeSpace - RESERVED_SPACE);
                 } else {
                     odtd = new Odtd(file);

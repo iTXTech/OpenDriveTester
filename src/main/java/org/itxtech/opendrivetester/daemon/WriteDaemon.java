@@ -27,18 +27,10 @@ public class WriteDaemon implements Runnable {
     private Odtd currentOdtd;
     private boolean shutdown = false;
     private long startTime = System.currentTimeMillis();
-    private long totalSpace;
     private long freeSpace;
     private long written = 0;
     private long lastTime;
     private long lastSize;
-
-    public WriteDaemon() {
-    }
-
-    public void setTotalSpace(long totalSpace) {
-        this.totalSpace = totalSpace;
-    }
 
     public void setFreeSpace(long freeSpace) {
         this.freeSpace = freeSpace;
@@ -59,15 +51,18 @@ public class WriteDaemon implements Runnable {
 
     @Override
     public void run() {
-        Main.print("Current \tAverage \tWritten \tRemaining");
+        Main.print("Current \tAverage \tWritten \tRemaining \tETA");
         while (!shutdown) {
             if (currentOdtd != null) {
                 var currentSize = currentOdtd.getCurrentSize();
                 var currentTime = System.currentTimeMillis();
                 var total = written + currentSize;
+                var remaining = (freeSpace - total) / 1024;
+                var average = total / (currentTime - startTime);
                 System.out.print("\r" + byteToMb((currentSize - lastSize) / (currentTime - lastTime)) + "/s\t" +
-                        byteToMb(total / (currentTime - startTime)) + "/s\t" +
-                        byteToMb(total / 1024) + "\t" + byteToMb((freeSpace - total) / 1024));
+                        byteToMb(average) + "/s\t" +
+                        byteToMb(total / 1024) + "\t" + byteToMb(remaining) + "\t" +
+                        Main.secToTime(remaining / average));
             }
             try {
                 Thread.sleep(200);
@@ -75,6 +70,7 @@ public class WriteDaemon implements Runnable {
                 e.printStackTrace();
             }
         }
+        Main.print("");
         Main.print("Write completed.");
     }
 

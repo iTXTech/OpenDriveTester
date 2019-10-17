@@ -110,4 +110,30 @@ public class Main {
         }
         return new BigDecimal(b).setScale(2, RoundingMode.HALF_UP) + unit[i];
     }
+
+    public static String secToTime(long time) {
+        String timeStr;
+        if (time <= 0)
+            return "00:00";
+        else {
+            var minute = time / 60;
+            if (minute < 60) {
+                var second = time % 60;
+                timeStr = unitFormat(minute) + ":" + unitFormat(second);
+            } else {
+                var hour = minute / 60;
+                if (hour > 99) {
+                    return "99:59:59";
+                }
+                minute = minute % 60;
+                var second = time - hour * 3600 - minute * 60;
+                timeStr = unitFormat(hour) + ":" + unitFormat(minute) + ":" + unitFormat(second);
+            }
+        }
+        return timeStr;
+    }
+
+    private static String unitFormat(long i) {
+        return (i >= 0 && i < 10) ? ("0" + i) : ("" + i);
+    }
 }
