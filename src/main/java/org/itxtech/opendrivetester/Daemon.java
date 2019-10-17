@@ -24,7 +24,6 @@ import java.math.RoundingMode;
 public class Daemon implements Runnable {
     public static final int TYPE_WRITE = 0;
     public static final int TYPE_VERIFY = 1;
-    private static final Handler handler = new Handler();
 
     private static class Handler extends Odtd.VerificationHandler {
         long errorBytes = 0;
@@ -45,6 +44,7 @@ public class Daemon implements Runnable {
     private long passed = 0;
     private long lastTime;
     private long lastSize;
+    private Handler handler = new Handler();
 
     private int type;
 
@@ -86,7 +86,7 @@ public class Daemon implements Runnable {
                 var currentTime = System.currentTimeMillis();
                 var total = passed + currentSize;
                 var remaining = (totalSpace - total) / 1024;
-                var average = total / (currentTime - startTime);
+                var average = total / Math.max(1, currentTime - startTime);
                 average = (average > 0) ? average : 1;
                 var timeDiff = currentTime - lastTime;
                 if (timeDiff == 0) {

@@ -43,7 +43,7 @@ public class Main {
 
         var options = new Options();
         var group = new OptionGroup();
-        var write = new Option("w", "write", true, "Write to specified drive");
+        var write = new Option("w", "write", true, "Write to the specified drive");
         write.setArgName("drive");
         group.addOption(write);
 
@@ -63,6 +63,9 @@ public class Main {
 
         var overwrite = new Option("o", "overwrite", false, "Overwrite existing ODTD files");
         options.addOption(overwrite);
+
+        var loop = new Option("r", "loop", true, "Write and verify automatically for specified loops");
+        options.addOption(loop);
 
         group.setRequired(true);
         options.addOptionGroup(group);
@@ -91,6 +94,41 @@ public class Main {
         }
         if (cmd.hasOption("v")) {
             verifyDrive(cmd.getOptionValue("v"), cmd.hasOption("f"));
+        }
+        if (cmd.hasOption("a")) {
+            writeAndVerify(cmd.getOptionValue("a"), cmd.hasOption("f"), Integer.parseInt(cmd.getOptionValue("r", "1")));
+        }
+    }
+
+    private static void sleep(int t) {
+        try {
+            Thread.sleep(t);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static void writeAndVerify(String drive, boolean fixed, int loops) {
+        loops = Math.max(loops, 1);
+        var writer = new Writer(drive);
+        var verifier = new Verifier(drive, false);
+        if (verifier.check()) {
+            print("Found existing data, start verifying.");
+            verifier.verify(new Daemon(Daemon.TYPE_VERIFY), fixed);
+            if (loops > 1) {
+                verifier.remove();
+            }
+            loops--;
+            sleep(500);
+        }
+        for (var i = 0; i < loops; i++) {
+            print("Loop " + (i + 1));
+            writer.write(new Daemon(Daemon.TYPE_WRITE), fixed, false);
+            sleep(500);
+            verifier.verify(new Daemon(Daemon.TYPE_VERIFY), fixed);
+            if (i < (loops - 1)) {
+                verifier.remove();
+            }
+            sleep(500);
         }
     }
 

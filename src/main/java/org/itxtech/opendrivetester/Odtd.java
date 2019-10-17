@@ -120,7 +120,7 @@ public class Odtd {
         }
     }
 
-    public boolean verify(boolean fixed) throws Exception {
+    public void verify(boolean fixed) throws Exception {
         if (is == null) {
             is = new DataInputStream(new FileInputStream(file));
         }
@@ -141,7 +141,7 @@ public class Odtd {
             }
             Thread.sleep(1);
         }
-        return true;
+        is.close();
     }
 
     public void writeHeader() throws Exception {
@@ -168,10 +168,12 @@ public class Odtd {
             currentSize += bufferSize;
             Thread.sleep(1);
         }
+        if (fixed) {
+            os.close();
+        }
     }
 
     public void completeWrite() throws Exception {
-        os.flush();
         os.close();
         completionTime = System.currentTimeMillis();
         var raf = new RandomAccessFile(file, "rw");
