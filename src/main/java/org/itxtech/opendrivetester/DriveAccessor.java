@@ -4,6 +4,7 @@ import oshi.SystemInfo;
 import oshi.hardware.HWDiskStore;
 import oshi.hardware.HWPartition;
 
+import java.io.File;
 import java.io.IOException;
 
 /*
@@ -26,6 +27,7 @@ import java.io.IOException;
 public abstract class DriveAccessor {
     protected SystemInfo info = new SystemInfo();
     protected String drive;
+    protected File file;
 
     public DriveAccessor(String drive) throws IOException {
         this(drive, true);
@@ -40,6 +42,7 @@ public abstract class DriveAccessor {
                     part = partition;
                     diskStore = disk;
                     this.drive = part.getMountPoint();
+                    file = new File(this.drive + File.separator);
                 }
             }
         }
@@ -50,9 +53,9 @@ public abstract class DriveAccessor {
                 Main.print("Drive Name: \t" + diskStore.getModel());
                 Main.print("Serial: \t" + diskStore.getSerial());
                 Main.print("Total Space: \t" + Main.byteToReadable(Long.valueOf(part.getSize()).doubleValue()));
+                Main.print("Free Space: \t" + Main.byteToReadable(Long.valueOf(getFreeSpace()).doubleValue()));
                 for (var store : info.getOperatingSystem().getFileSystem().getFileStores()) {
                     if (store.getMount().toLowerCase().startsWith(drive.toLowerCase())) {
-                        Main.print("Free Space: \t" + Main.byteToReadable(Long.valueOf(store.getFreeSpace()).doubleValue()));
                         Main.print("Description: \t" + store.getDescription());
                         break;
                     }
@@ -63,11 +66,6 @@ public abstract class DriveAccessor {
     }
 
     protected long getFreeSpace() {
-        for (var store : info.getOperatingSystem().getFileSystem().getFileStores()) {
-            if (store.getMount().toLowerCase().startsWith(drive.toLowerCase())) {
-                return store.getFreeSpace();
-            }
-        }
-        return 0;
+        return file.getFreeSpace();
     }
 }

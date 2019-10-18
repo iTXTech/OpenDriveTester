@@ -41,7 +41,7 @@ public class Odtd {
     public static final long FIXED_SEED = 2019070920000531L;
 
     public static final long DEFAULT_SIZE = (long) 2 * 1024 * 1024 * 1024;//2GB
-    public static final int DEFAULT_BUFFER_SIZE = 256 * 1024;//256KB
+    public static final int DEFAULT_BUFFER_SIZE = 512 * 1024;//256KB
     public static final String HEADER = "ODTD1.0";
     public static final int SEED_TIMES = 4;
 
@@ -148,6 +148,7 @@ public class Odtd {
         creationTime = System.currentTimeMillis();
         seed = System.nanoTime();
         os = new FileOutputStream(file);
+        os.getChannel().force(false);
         os.write(HEADER.getBytes());
         os.write(writeLong(creationTime));
         os.write(writeLong(completionTime));
@@ -159,6 +160,7 @@ public class Odtd {
     public void write(boolean fixed) throws Exception {
         if (os == null) {
             os = new FileOutputStream(file);
+            os.getChannel().force(false);
         }
         var random = fixed ? new Random(FIXED_SEED) : new Random(seed);
         for (var i = 0; i < size / bufferSize; i++) {
