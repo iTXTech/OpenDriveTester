@@ -5,7 +5,6 @@ import oshi.hardware.HWDiskStore;
 import oshi.hardware.HWPartition;
 
 import java.io.File;
-import java.io.IOException;
 
 /*
  * iTXTech OpenDriveTester
@@ -29,11 +28,11 @@ public abstract class DriveAccessor {
     protected String drive;
     protected File file;
 
-    public DriveAccessor(String drive) throws IOException {
+    public DriveAccessor(String drive) {
         this(drive, true);
     }
 
-    public DriveAccessor(String drive, boolean printInfo) throws IOException {
+    public DriveAccessor(String drive, boolean printInfo) {
         HWDiskStore diskStore = null;
         HWPartition part = null;
         for (var disk : info.getHardware().getDiskStores()) {
@@ -48,7 +47,11 @@ public abstract class DriveAccessor {
         }
         if (printInfo) {
             if (part == null) {
-                throw new IOException("Drive not found: " + drive);
+                Main.print("Drive not found: " + drive + ", use dir directly");
+                this.drive = drive + File.separator;
+                file = new File(this.drive);
+                Main.print("Total Space: \t" + Main.byteToReadable(Long.valueOf(file.getTotalSpace()).doubleValue()));
+                Main.print("Free Space: \t" + Main.byteToReadable(Long.valueOf(getFreeSpace()).doubleValue()));
             } else {
                 Main.print("Drive Name: \t" + diskStore.getModel());
                 Main.print("Serial: \t" + diskStore.getSerial());
@@ -60,8 +63,8 @@ public abstract class DriveAccessor {
                         break;
                     }
                 }
-                Main.print("");
             }
+            Main.print("");
         }
     }
 

@@ -76,12 +76,10 @@ public class Main {
         } catch (ParseException e) {
             print(e.getMessage());
             new HelpFormatter().printHelp("opendrivetester", options);
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
-    private static void processCmd(CommandLine cmd) throws Exception {
+    private static void processCmd(CommandLine cmd) {
         if (cmd.hasOption("l")) {
             for (var disk : new SystemInfo().getHardware().getDiskStores()) {
                 for (var partition : disk.getPartitions()) {
@@ -110,7 +108,7 @@ public class Main {
         }
     }
 
-    private static void writeAndVerify(String drive, boolean fixed, int loops) throws Exception {
+    private static void writeAndVerify(String drive, boolean fixed, int loops) {
         loops = Math.max(loops, 1);
         var writer = new Writer(drive);
         var verifier = new Verifier(drive, false);
@@ -135,12 +133,12 @@ public class Main {
         }
     }
 
-    private static void writeDrive(String drive, boolean fixed, boolean overwrite) throws Exception {
+    private static void writeDrive(String drive, boolean fixed, boolean overwrite) {
         var writer = new Writer(drive);
         writer.write(new Daemon(Daemon.TYPE_WRITE), fixed, overwrite);
     }
 
-    private static void verifyDrive(String drive, boolean fixed) throws Exception {
+    private static void verifyDrive(String drive, boolean fixed) {
         var verifier = new Verifier(drive);
         verifier.verify(new Daemon(Daemon.TYPE_VERIFY), fixed);
     }

@@ -1,7 +1,6 @@
 package org.itxtech.opendrivetester;
 
 import java.io.File;
-import java.io.IOException;
 
 /*
  * iTXTech OpenDriveTester
@@ -21,11 +20,11 @@ import java.io.IOException;
  * limitations under the License.
  */
 public class Verifier extends DriveAccessor {
-    public Verifier(String drive) throws IOException {
+    public Verifier(String drive) {
         super(drive);
     }
 
-    public Verifier(String drive, boolean printInfo) throws IOException {
+    public Verifier(String drive, boolean printInfo) {
         super(drive, printInfo);
     }
 

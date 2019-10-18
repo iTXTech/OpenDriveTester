@@ -1,7 +1,6 @@
 package org.itxtech.opendrivetester;
 
 import java.io.File;
-import java.io.IOException;
 
 /*
  * iTXTech OpenDriveTester
@@ -23,11 +22,11 @@ import java.io.IOException;
 public class Writer extends DriveAccessor {
     public static final int RESERVED_SPACE = 512 * 1024;//512KB
 
-    public Writer(String drive) throws IOException {
+    public Writer(String drive) {
         super(drive);
     }
 
-    public Writer(String drive, boolean printInfo) throws IOException {
+    public Writer(String drive, boolean printInfo) {
         super(drive, printInfo);
     }
 
